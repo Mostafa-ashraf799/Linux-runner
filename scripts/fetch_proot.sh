@@ -1,46 +1,41 @@
 #!/usr/bin/env bash
-# Binary Beast — Linux Runner
-#
-# Downloads the OFFICIAL proot .deb package from Termux's own apt
-# repository (arm64/aarch64 build) and extracts the real proot binary
-# from it — this is the actual proot maintained by the Termux project,
-# not a random third-party binary. Places it where the Android build
-# expects native libraries to live (jniLibs), renamed to libproot.so
-# (Android's packaging only allows shipping arbitrary executables under
-# jniLibs if they're named lib*.so — the file itself is still the plain
-# proot ELF binary, untouched).
-#
-# Run locally with: ./scripts/fetch_proot.sh
-# Also run automatically by the GitHub Actions build workflow.
-
 set -euo pipefail
 
 DEST_DIR="app/src/main/jniLibs/arm64-v8a"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# Termux's official apt repo, mirrored on cdimage.debian.org (Debian's
-# infrastructure mirrors Termux's repo verbatim). If this specific
-# version 404s in the future because Termux published a newer build,
-# check https://cdimage.debian.org/mirror/termux.dev/apt/termux-main/pool/main/p/proot/
-# for the current filename and update PROOT_DEB_URL below.
-PROOT_DEB_URL="https://cdimage.debian.org/mirror/termux.dev/apt/termux-main/pool/main/p/proot/proot_5.1.107.78-1_aarch64.deb"
+TERMUX_REPO_BASE="https://packages-cf.termux.dev/apt/termux-main"
+PACKAGES_INDEX_URL="$TERMUX_REPO_BASE/dists/stable/main/binary-aarch64/Packages"
 
-echo "==> Binary Beast: تحميل حزمة proot الرسمية من مستودع Termux..."
+echo "==> Binary Beast: جلب فهرس حزم Termux الرسمي..."
+curl -fL "$PACKAGES_INDEX_URL" -o "$TMP_DIR/Packages"
+
+PROOT_RELATIVE_PATH="$(awk '
+    /^Package: proot$/ { in_proot=1 }
+    in_proot && /^Filename:/ { print $2; exit }
+    /^$/ { in_proot=0 }
+' "$TMP_DIR/Packages")"
+
+if [ -z "$PROOT_RELATIVE_PATH" ]; then
+    echo "خطأ: لم يتم العثور على حزمة proot في فهرس Termux." >&2
+    exit 1
+fi
+
+PROOT_DEB_URL="$TERMUX_REPO_BASE/$PROOT_RELATIVE_PATH"
+echo "==> تحميل proot الحالي فعليًا من: $PROOT_DEB_URL"
 curl -fL "$PROOT_DEB_URL" -o "$TMP_DIR/proot.deb"
 
 echo "==> فك حزمة .deb..."
 cd "$TMP_DIR"
-ar x proot.deb                      # .deb is an ar archive containing control.tar.* and data.tar.*
+ar x proot.deb
 mkdir -p data
-tar -xf data.tar.* -C data          # handles .xz/.gz/.zst transparently with modern tar
+tar -xf data.tar.* -C data
 
-# The actual binary inside a Termux .deb lives under
-# ./data/data/com.termux/files/usr/bin/proot
 PROOT_BINARY="$(find data -type f -name proot | head -n1)"
 
 if [ -z "$PROOT_BINARY" ]; then
-    echo "خطأ: لم يتم العثور على binary اسمه proot جوه الحزمة — تأكد إن الرابط لسه صالح." >&2
+    echo "خطأ: لم يتم العثور على binary اسمه proot." >&2
     exit 1
 fi
 
