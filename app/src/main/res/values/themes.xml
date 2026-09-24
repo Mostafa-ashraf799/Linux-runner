@@ -1,0 +1,16 @@
+<resources>
+    <style name="Theme.LinuxRunner" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#2E7D32</item>
+        <item name="colorPrimaryDark">#1B5E20</item>
+        <item name="colorAccent">#66BB6A</item>
+    </style>
+
+    <style name="SpecialKeyButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:background">#333333</item>
+    </style>
+</resources>
