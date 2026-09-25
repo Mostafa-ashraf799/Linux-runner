@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!--
+  Binary Beast - Linux Runner
+  Minimal noVNC connection page, loaded inside the app's WebView by
+  DesktopViewerActivity. Reads connection parameters from the URL query
+  string (set from Kotlin) and auto-connects using noVNC's RFB API.
+
+  Requires the actual noVNC library files to be placed alongside this file
+  — see README section "noVNC assets" for exactly what to download and
+  where. This file does not embed noVNC itself (that project is a full
+  library with its own files/license), only the small amount of glue code
+  needed to drive it automatically with no user interaction.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Binary Beast — Linux Runner</title>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #screen { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="screen"></div>
+
+    <!--
+      Path to noVNC's core module, once you've placed the noVNC release
+      files here (see README). noVNC ships as ES modules from v1.3+.
+    -->
+    <script type="module">
+        import RFB from './core/rfb.js';
+
+        function getParam(name, fallback) {
+            const params = new URLSearchParams(window.location.search);
+            return params.has(name) ? params.get(name) : fallback;
+        }
+
+        const host = getParam('host', '127.0.0.1');
+        const port = getParam('port', '6901');
+        const password = getParam('password', '');
+        const resizeMode = getParam('resize', 'scale'); // 'scale' fits the whole desktop to the phone screen
+
+        const url = `ws://${host}:${port}/`;
+
+        const rfb = new RFB(document.getElementById('screen'), url, {
+            credentials: { password: password }
+        });
+
+        rfb.scaleViewport = (resizeMode === 'scale');
+        rfb.resizeSession = false; // we're driving a fixed 1280x720 XFCE session (see ProotEngine)
+
+        rfb.addEventListener('connect', () => {
+            console.log('Binary Beast: VNC connected');
+        });
+
+        rfb.addEventListener('disconnect', (e) => {
+            console.log('Binary Beast: VNC disconnected', e.detail);
+        });
+
+        rfb.addEventListener('credentialsrequired', () => {
+            // Should not normally fire since we pass the password up front,
+            // but guards against a server that re-prompts.
+            rfb.sendCredentials({ password: password });
+        });
+
+        // Exposed for DesktopViewerActivity's toolbar keyboard: forwards
+        // typed characters as individual key events using noVNC's
+        // documented RFB.sendKey(keysym, code, down) API. Handles plain
+        // printable characters; special keys (backspace/enter) are sent
+        // by their keysym directly rather than relying on charCode.
+        const KEYSYM_BACKSPACE = 0xff08;
+        const KEYSYM_ENTER = 0xff0d;
+
+        window.binaryBeastSendText = function (text) {
+            for (const ch of text) {
+                if (ch === '\n') {
+                    rfb.sendKey(KEYSYM_ENTER, 'Enter');
+                    continue;
+                }
+                if (ch === '\b') {
+                    rfb.sendKey(KEYSYM_BACKSPACE, 'Backspace');
+                    continue;
+                }
+                const keysym = ch.charCodeAt(0);
+                rfb.sendKey(keysym, undefined);
+            }
+        };
+
+        const SPECIAL_KEYSYMS = {
+            'Escape': 0xff1b,
+            'Tab': 0xff09,
+            'Up': 0xff52,
+            'Down': 0xff54,
+            'Left': 0xff51,
+            'Right': 0xff53
+        };
+        const KEYSYM_CTRL_L = 0xffe3;
+        const KEYSYM_ALT_L = 0xffe9;
+
+        // noVNC's RFB.sendKey(keysym, code, down) supports explicit
+        // down/up events (down=true, then down=false) — this is what lets
+        // us hold Ctrl/Alt down, send the real key, then release the
+        // modifier, exactly like a physical keyboard chord.
+        function withModifiers(ctrl, alt, action) {
+            if (ctrl) rfb.sendKey(KEYSYM_CTRL_L, 'ControlLeft', true);
+            if (alt) rfb.sendKey(KEYSYM_ALT_L, 'AltLeft', true);
+
+            action();
+
+            if (alt) rfb.sendKey(KEYSYM_ALT_L, 'AltLeft', false);
+            if (ctrl) rfb.sendKey(KEYSYM_CTRL_L, 'ControlLeft', false);
+        }
+
+        // Sends a named special key (Escape/Tab/arrows), optionally held
+        // together with Ctrl and/or Alt (e.g. Alt+Tab, Ctrl+Escape).
+        window.binaryBeastSendSpecialKey = function (keysymName, ctrl, alt) {
+            const keysym = SPECIAL_KEYSYMS[keysymName];
+            if (!keysym) return;
+            withModifiers(ctrl, alt, () => rfb.sendKey(keysym, keysymName));
+        };
+
+        // Sends a single printable character combined with Ctrl and/or Alt
+        // — this is the actual Ctrl+C / Ctrl+V / Ctrl+Z path.
+        window.binaryBeastSendCharWithModifiers = function (char, ctrl, alt) {
+            const keysym = char.charCodeAt(0);
+            withModifiers(ctrl, alt, () => rfb.sendKey(keysym, undefined));
+        };
+    </script>
+</body>
+</html>
