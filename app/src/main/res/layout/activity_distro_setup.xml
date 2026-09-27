@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/setupTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <LinearLayout
+        android:id="@+id/sourceChoiceLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="عايز تجيب ملف النظام إزاي؟"
+            android:textSize="15sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/downloadAutoButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="تحميل تلقائي من الإنترنت" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="الخيار الافتراضي والأسهل. التطبيق نفسه هيروح يجيب ملف النظام من المصدر الرسمي وينزله ويجهزه تلقائيًا — استخدم ده في العادي."
+            android:textSize="12sp"
+            android:textColor="#888888"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/pickFileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="اختيار ملف من التنزيلات" />
+
+        <TextView
+            android:id="@+id/pickFileExplanation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="استخدم ده بس لو عندك بالفعل ملف نظام صحيح ونضيف نزلته إنت بنفسك من قبل (بامتداد .tar.gz أو .tar.xz) وعايز توفر وقت التحميل. لو مش متأكد، استخدم زرار التحميل التلقائي فوق بدل كده — اختيار ملف غلط أو تالف هيوقف التجهيز بمشكلة."
+            android:textSize="12sp"
+            android:textColor="#888888"
+            android:gravity="center"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/setupProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100" />
+
+    <TextView
+        android:id="@+id/setupStatusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/launchDesktopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="فتح سطح المكتب"
+        android:visibility="gone" />
+
+</LinearLayout>

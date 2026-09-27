@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Binary Beast — Linux Runner app icon
+  An original, simplified geometric penguin (round body, head, eye, beak,
+  feet) in flat style — evokes Linux without reproducing the official
+  "Tux" mascot's specific illustration, which has its own detailed design
+  and is commonly treated as protected artwork. Colors match the app's
+  green/white/amber Binary Beast palette.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,30
+            C70,30 80,48 80,66
+            C80,80 68,90 54,90
+            C40,90 28,80 28,66
+            C28,48 38,30 54,30 Z" />
+
+    <!-- Belly patch -->
+    <path
+        android:fillColor="#EAF5EC"
+        android:pathData="M54,46
+            m-16,20
+            a16,20 0,1 1,32 0
+            a16,20 0,1 1,-32 0 Z" />
+
+    <!-- Head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,20
+            m-13,0
+            a13,13 0,1 1,26 0
+            a13,13 0,1 1,-26 0 Z" />
+
+    <!-- Eye -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M58,17
+            m-2,0
+            a2,2 0,1 1,4 0
+            a2,2 0,1 1,-4 0 Z" />
+
+    <!-- Beak -->
+    <path
+        android:fillColor="#F9A825"
+        android:pathData="M63,20 L69,17 L69,23 Z" />
+
+    <!-- Feet -->
+    <path
+        android:fillColor="#F9A825"
+        android:pathData="M46,90 m-6,0 a6,3 0,1 1,12 0 a6,3 0,1 1,-12 0 Z" />
+    <path
+        android:fillColor="#F9A825"
+        android:pathData="M62,90 m-6,0 a6,3 0,1 1,12 0 a6,3 0,1 1,-12 0 Z" />
+
+</vector>
