@@ -1,0 +1,78 @@
+name: Build APK — Binary Beast Linux Runner
+
+# Builds automatically on every push to main, and can also be triggered
+# manually from the Actions tab (workflow_dispatch) without needing a push.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Generate Gradle wrapper
+        # The project as delivered doesn't include the gradlew binary
+        # wrapper files (they're large and binary) — this step generates
+        # them fresh using whatever Gradle is available on the runner,
+        # pinned to a known-good version for reproducibility.
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Fetch real proot binary (Termux official repo)
+        run: bash scripts/fetch_proot.sh
+
+      - name: Fetch real noVNC library (official release)
+        run: bash scripts/fetch_novnc.sh
+
+      - name: Verify fetched assets are present
+        run: |
+          test -f app/src/main/jniLibs/arm64-v8a/libproot.so || (echo "proot binary missing!" && exit 1)
+          test -f app/src/main/assets/novnc/core/rfb.js || (echo "noVNC rfb.js missing!" && exit 1)
+          echo "كل الملفات المطلوبة موجودة."
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build release APK (unsigned)
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinuxRunner-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload release APK artifact (unsigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinuxRunner-release-apk-unsigned
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Create GitHub Release (on version tag only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          generate_release_notes: true
